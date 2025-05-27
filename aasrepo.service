@@ -1,0 +1,14 @@
+[Unit]
+Description=AAS Repo backend.Service
+
+[Service]
+User=root	
+WorkingDirectory=/home/datalake/aas_fastapi/
+
+#StartLimitIntervalSec=5
+#ExecStart=/bin/bash -c 'source /home/datalake/aas_fastapi/venv_aasrepo/bin/activate && uvicorn main:app --host 192.168.1.212 --port 8010 --reload '
+ExecStart=/bin/bash -c 'source /home/datalake/aas_fastapi/venv_aasrepo/bin/activate && python main_nginx.py --host 0.0.0.0 --port 8081 --workers 4'
+Restart=always
+#StandardError=file:/home/datalake/aas_fastapi/errorLog/error.log
+[Install]
+WantedBy=multi-user.target
