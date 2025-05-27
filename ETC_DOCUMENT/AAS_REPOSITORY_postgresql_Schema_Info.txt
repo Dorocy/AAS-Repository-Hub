@@ -1,0 +1,679 @@
+
+CREATE CAST (numeric AS varchar) WITH INOUT AS IMPLICIT;
+
+
+/**
+ * 
+
+--- aasrepo DB 데이터 초기화
+## 첨부가 있을경우 서버 첨부파일도 삭제 필요
+## \aas_files\
+
+delete
+from aasrepo.socialaccounts
+where user_seq <> 1
+
+ALTER SEQUENCE aasrepo.aasinstance_instance_seq_seq RESTART WITH 1;
+ALTER SEQUENCE aasrepo.aasmodels_aasmodel_seq_seq RESTART WITH 1;
+ALTER SEQUENCE aasrepo.aasmodel_attachments_attachment_seq_seq RESTART WITH 1;
+ALTER SEQUENCE aasrepo.aasmodels_aasmodel_seq_seq  RESTART WITH 1;
+ALTER SEQUENCE aasrepo.submodels_submodel_seq_seq RESTART WITH 1;
+ALTER SEQUENCE aasrepo.validations_validation_seq_seq RESTART WITH 1;
+ALTER SEQUENCE aasrepo.users_user_seq_seq RESTART WITH 2;
+ALTER SEQUENCE aasrepo.socialaccounts_socialaccount_seq_seq RESTART WITH 1;
+ 
+
+TRUNCATE aasrepo.aasmodels, aasrepo.submodels, aasrepo.aasmodel_image, aasrepo.submodel_image, aasrepo.aasmodel_attachments
+, aasrepo.aasinstance, aasrepo.aasinstance_aasmodel_submodels, aasrepo.aasinstance_aasmodels, aasrepo.validations, aasrepo.users_group cascade
+
+
+ * 
+ * */
+
+
+-- aasrepo.aasinstance definition
+
+-- DROP TABLE IF EXISTS aasrepo.aasinstance CASCADE;
+
+CREATE TABLE aasrepo.aasinstance (
+	instance_seq bigserial NOT NULL, -- AAS인스턴스SEQ
+	instance_name varchar NOT NULL, -- AAS인스턴스명
+	description text NULL, -- 비고
+	verification varchar(20) NULL, -- AAS인스턴스검증상태,success/fail
+	user_seq int4 NOT NULL, -- 인스턴스사용자
+	create_user_seq int4 DEFAULT 0 NOT NULL, -- 최초생성자
+	create_date timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 최초등록일시
+	last_mod_user_seq int4 NULL, -- 마지막수정자
+	last_mod_date timestamptz NULL, -- 마지막수정일시
+	CONSTRAINT aas_instance_pk PRIMARY KEY (instance_seq)
+);
+COMMENT ON TABLE aasrepo.aasinstance IS 'AAS인스턴스';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo.aasinstance.instance_seq IS 'AAS인스턴스SEQ';
+COMMENT ON COLUMN aasrepo.aasinstance.instance_name IS 'AAS인스턴스명';
+COMMENT ON COLUMN aasrepo.aasinstance.description IS '비고';
+COMMENT ON COLUMN aasrepo.aasinstance.verification IS 'AAS인스턴스검증상태,success/fail';
+COMMENT ON COLUMN aasrepo.aasinstance.user_seq IS '인스턴스사용자';
+COMMENT ON COLUMN aasrepo.aasinstance.create_user_seq IS '최초생성자';
+COMMENT ON COLUMN aasrepo.aasinstance.create_date IS '최초등록일시';
+COMMENT ON COLUMN aasrepo.aasinstance.last_mod_user_seq IS '마지막수정자';
+COMMENT ON COLUMN aasrepo.aasinstance.last_mod_date IS '마지막수정일시';
+
+
+-- aasrepo.aasinstance foreign keys
+
+ALTER TABLE aasrepo.aasinstance ADD CONSTRAINT aasinstance_users_fk FOREIGN KEY (user_seq) REFERENCES aasrepo.users(user_seq);
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- aasrepo.aasinstance_aasmodels definition
+
+-- DROP TABLE aasrepo.aasinstance_aasmodels;
+
+CREATE TABLE aasrepo.aasinstance_aasmodels (
+	instance_seq int8 NOT NULL, -- AAS인스턴스SEQ
+	aasmodel_seq int8 NOT NULL, -- AAS모델SEQ
+	metadata jsonb NULL, -- AAS모델NEW_Value_META
+	create_user_seq int4 DEFAULT 0 NOT NULL, -- 최초생성자
+	create_date timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 최초등록일시
+	last_mod_user_seq int4 NULL, -- 마지막수정자
+	last_mod_date timestamptz NULL, -- 마지막수정일시
+	CONSTRAINT instance_aasmodels_unique UNIQUE (instance_seq, aasmodel_seq)
+);
+COMMENT ON TABLE aasrepo.aasinstance_aasmodels IS 'AAS인스턴스-AAS모델';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo.aasinstance_aasmodels.instance_seq IS 'AAS인스턴스SEQ';
+COMMENT ON COLUMN aasrepo.aasinstance_aasmodels.aasmodel_seq IS 'AAS모델SEQ';
+COMMENT ON COLUMN aasrepo.aasinstance_aasmodels.metadata IS 'AAS모델NEW_Value_META';
+COMMENT ON COLUMN aasrepo.aasinstance_aasmodels.create_user_seq IS '최초생성자';
+COMMENT ON COLUMN aasrepo.aasinstance_aasmodels.create_date IS '최초등록일시';
+COMMENT ON COLUMN aasrepo.aasinstance_aasmodels.last_mod_user_seq IS '마지막수정자';
+COMMENT ON COLUMN aasrepo.aasinstance_aasmodels.last_mod_date IS '마지막수정일시';
+
+
+-- aasrepo.aasinstance_aasmodels foreign keys
+
+ALTER TABLE aasrepo.aasinstance_aasmodels ADD CONSTRAINT aasinstance_aasmodels_aasinstance_fk FOREIGN KEY (instance_seq) REFERENCES aasrepo.aasinstance(instance_seq);
+ALTER TABLE aasrepo.aasinstance_aasmodels ADD CONSTRAINT aasinstance_aasmodels_aasmodels_fk FOREIGN KEY (aasmodel_seq) REFERENCES aasrepo.aasmodels(aasmodel_seq);
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- aasrepo.aasinstance_aasmodel_submodels definition
+
+-- Drop table
+
+-- DROP TABLE aasrepo.aasinstance_aasmodel_submodels;
+
+CREATE TABLE aasrepo.aasinstance_aasmodel_submodels (
+	instance_seq int8 NOT NULL, -- AAS인스턴스SEQ
+	aasmodel_seq int8 NOT NULL, -- AAS모델SEQ
+	submodel_seq int8 NOT NULL, -- SUB모델SEQ
+	metadata jsonb NULL, -- SUB모델NEW_VALUE_META
+	create_user_seq int4 DEFAULT 0 NOT NULL, -- 최초생성자
+	create_date timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 최초등록일시
+	last_mod_user_seq int4 NULL, -- 마지막수정자
+	last_mod_date timestamptz NULL, -- 마지막수정일시
+	CONSTRAINT instance_aasmodel_submodels_unique UNIQUE (instance_seq, aasmodel_seq, submodel_seq)
+);
+COMMENT ON TABLE aasrepo.aasinstance_aasmodel_submodels IS 'AAS인스턴스-AAS모델-SUB모델';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo.aasinstance_aasmodel_submodels.instance_seq IS 'AAS인스턴스SEQ';
+COMMENT ON COLUMN aasrepo.aasinstance_aasmodel_submodels.aasmodel_seq IS 'AAS모델SEQ';
+COMMENT ON COLUMN aasrepo.aasinstance_aasmodel_submodels.submodel_seq IS 'SUB모델SEQ';
+COMMENT ON COLUMN aasrepo.aasinstance_aasmodel_submodels.metadata IS 'SUB모델NEW_VALUE_META';
+COMMENT ON COLUMN aasrepo.aasinstance_aasmodel_submodels.create_user_seq IS '최초생성자';
+COMMENT ON COLUMN aasrepo.aasinstance_aasmodel_submodels.create_date IS '최초등록일시';
+COMMENT ON COLUMN aasrepo.aasinstance_aasmodel_submodels.last_mod_user_seq IS '마지막수정자';
+COMMENT ON COLUMN aasrepo.aasinstance_aasmodel_submodels.last_mod_date IS '마지막수정일시';
+
+
+-- aasrepo.aasinstance_aasmodel_submodels foreign keys
+
+ALTER TABLE aasrepo.aasinstance_aasmodel_submodels ADD CONSTRAINT aasinstance_aasmodel_submodels_aasmodels_fk FOREIGN KEY (aasmodel_seq) REFERENCES aasrepo.aasmodels(aasmodel_seq);
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- aasrepo.aasmodels definition
+
+-- Drop table
+
+-- DROP TABLE aasrepo.aasmodels;
+
+CREATE TABLE aasrepo.aasmodels (
+	aasmodel_seq bigserial NOT NULL, -- AAS모델SEQ
+	aasmodel_name varchar NOT NULL, -- AAS모델명
+	aasmodel_id varchar NOT NULL, -- AAS모델ID
+	aasmodel_template_id varchar NULL, -- AAS모델템플릿ID
+	"version" varchar(50) NULL, -- AAS모델버전
+	"type" varchar(50) NULL, -- AAS모델타입 template/instance
+	category_seq int4 NULL, -- 산업분류카테고리 FK
+	description text NULL, -- 비고
+	status varchar(20) DEFAULT 'temporary'::character varying NOT NULL, -- temporary/draft/published/deprecated
+	source_project varchar(100) NULL, -- e.g., "중기부참조모델", "자율제조"
+	metadata jsonb NULL, -- Flexible metadata storage
+	create_user_seq int4 DEFAULT 0 NOT NULL, -- 최초생성자
+	create_date timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 최초등록일시
+	last_mod_user_seq int4 NULL, -- 마지막수정자
+	last_mod_date timestamptz NULL,
+	CONSTRAINT aasmodels_pk PRIMARY KEY (aasmodel_seq)
+);
+COMMENT ON TABLE aasrepo.aasmodels IS 'AAS모델';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo.aasmodels.aasmodel_seq IS 'AAS모델SEQ';
+COMMENT ON COLUMN aasrepo.aasmodels.aasmodel_name IS 'AAS모델명';
+COMMENT ON COLUMN aasrepo.aasmodels.aasmodel_id IS 'AAS모델ID';
+COMMENT ON COLUMN aasrepo.aasmodels.aasmodel_template_id IS 'AAS모델템플릿ID';
+COMMENT ON COLUMN aasrepo.aasmodels."version" IS 'AAS모델버전';
+COMMENT ON COLUMN aasrepo.aasmodels."type" IS 'AAS모델타입 template/instance';
+COMMENT ON COLUMN aasrepo.aasmodels.category_seq IS '산업분류카테고리 FK';
+COMMENT ON COLUMN aasrepo.aasmodels.description IS '비고';
+COMMENT ON COLUMN aasrepo.aasmodels.status IS 'temporary/draft/published/deprecated';
+COMMENT ON COLUMN aasrepo.aasmodels.source_project IS 'e.g., "중기부참조모델", "자율제조"';
+COMMENT ON COLUMN aasrepo.aasmodels.metadata IS 'Flexible metadata storage';
+COMMENT ON COLUMN aasrepo.aasmodels.create_user_seq IS '최초생성자';
+COMMENT ON COLUMN aasrepo.aasmodels.create_date IS '최초등록일시';
+COMMENT ON COLUMN aasrepo.aasmodels.last_mod_user_seq IS '마지막수정자';
+
+
+-- aasrepo.aasmodels foreign keys
+
+ALTER TABLE aasrepo.aasmodels ADD CONSTRAINT aasmodels_categories_fk FOREIGN KEY (category_seq) REFERENCES aasrepo.categories(category_seq);
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+-- aasrepo.aasmodel_attachments definition
+
+-- Drop table
+
+-- DROP TABLE aasrepo.aasmodel_attachments;
+
+CREATE TABLE aasrepo.aasmodel_attachments (
+	attachment_seq bigserial NOT NULL, -- 첨부파일SEQ
+	aasmodel_seq int8 NOT NULL, -- AAS모델SEQ
+	filename varchar NOT NULL, -- 파일명
+	realpath varchar NOT NULL, -- 파일서버경로
+	create_date timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 생성일
+	CONSTRAINT aasmodel_attachments_pkey PRIMARY KEY (attachment_seq),
+	CONSTRAINT unique_aasmodel_seq_filename UNIQUE (aasmodel_seq, filename)
+);
+COMMENT ON TABLE aasrepo.aasmodel_attachments IS 'AAS모델-첨부파일';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo.aasmodel_attachments.attachment_seq IS '첨부파일SEQ';
+COMMENT ON COLUMN aasrepo.aasmodel_attachments.aasmodel_seq IS 'AAS모델SEQ';
+COMMENT ON COLUMN aasrepo.aasmodel_attachments.filename IS '파일명';
+COMMENT ON COLUMN aasrepo.aasmodel_attachments.realpath IS '파일서버경로';
+COMMENT ON COLUMN aasrepo.aasmodel_attachments.create_date IS '생성일';
+
+
+-- aasrepo.aasmodel_attachments foreign keys
+
+ALTER TABLE aasrepo.aasmodel_attachments ADD CONSTRAINT aasmodel_attachments_aasmodels_fk FOREIGN KEY (aasmodel_seq) REFERENCES aasrepo.aasmodels(aasmodel_seq);
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+-- aasrepo.aasmodel_image definition
+
+-- Drop table
+
+-- DROP TABLE aasrepo.aasmodel_image;
+
+CREATE TABLE aasrepo.aasmodel_image (
+	aasmodel_seq int8 NOT NULL, -- AAS모델SEQ
+	aasmodel_img text NULL, -- AAS모델_IMAGE
+	filename varchar NULL, -- AAS모델_MIMETYPE
+	mime_type varchar NULL, -- AAS모델_MIMETYPE
+	CONSTRAINT aasmodels_image_unique UNIQUE (aasmodel_seq)
+);
+COMMENT ON TABLE aasrepo.aasmodel_image IS 'AAS모델-이미지';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo.aasmodel_image.aasmodel_seq IS 'AAS모델SEQ';
+COMMENT ON COLUMN aasrepo.aasmodel_image.aasmodel_img IS 'AAS모델_IMAGE';
+COMMENT ON COLUMN aasrepo.aasmodel_image.filename IS 'AAS모델_MIMETYPE';
+COMMENT ON COLUMN aasrepo.aasmodel_image.mime_type IS 'AAS모델_MIMETYPE';
+
+
+-- aasrepo.aasmodel_image foreign keys
+
+ALTER TABLE aasrepo.aasmodel_image ADD CONSTRAINT aasmodel_image_aasmodels_fk FOREIGN KEY (aasmodel_seq) REFERENCES aasrepo.aasmodels(aasmodel_seq);
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+-- aasrepo.aas_codeinfo definition
+
+-- DROP TABLE aasrepo.aas_codeinfo;
+
+-- 기준정보 테이블 삭제 주의
+
+CREATE TABLE aasrepo.aas_codeinfo (
+	grpcode varchar(10) NULL, -- 그룹코드
+	code varchar(20) NOT NULL, -- 코드
+	codename text NULL, -- 코드명1
+	codename2 text NULL, -- 코드명2
+	codename3 text NULL, -- 코드명3
+	codename4 text NULL, -- 코드명4
+	codename5 text NULL, -- 코드명5
+	refcode1 varchar(400) NULL, -- 참조코드1
+	refcode2 varchar(400) NULL, -- 참조코드2
+	refcode3 varchar(400) NULL, -- 참조코드3
+	refcode4 varchar(400) NULL, -- 참조코드4
+	refcode5 varchar(400) NULL, -- 참조코드5
+	sortkey int4 NULL, -- 정렬키
+	description text NULL, -- 비고
+	status bpchar(1) DEFAULT 'Y'::bpchar NULL, -- Y=활성,N=비활성
+	create_user_seq int4 NULL, -- 최초생성자
+	create_date timestamptz NULL, -- 최초생성일
+	last_mod_user_seq int4 NULL, -- 마지막수정자
+	last_mod_date timestamptz NULL, -- 마지막수정일
+	CONSTRAINT aasrepocode_pk PRIMARY KEY (code)
+);
+COMMENT ON TABLE aasrepo.aas_codeinfo IS 'AAS코드관리';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo.aas_codeinfo.grpcode IS '그룹코드';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.code IS '코드';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.codename IS '코드명1';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.codename2 IS '코드명2';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.codename3 IS '코드명3';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.codename4 IS '코드명4';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.codename5 IS '코드명5';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.refcode1 IS '참조코드1';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.refcode2 IS '참조코드2';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.refcode3 IS '참조코드3';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.refcode4 IS '참조코드4';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.refcode5 IS '참조코드5';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.sortkey IS '정렬키';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.description IS '비고';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.status IS 'Y=활성,N=비활성';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.create_user_seq IS '최초생성자';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.create_date IS '최초생성일';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.last_mod_user_seq IS '마지막수정자';
+COMMENT ON COLUMN aasrepo.aas_codeinfo.last_mod_date IS '마지막수정일';
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+-- aasrepo.categories definition
+
+-- Drop table
+
+-- DROP TABLE aasrepo.categories;
+
+CREATE TABLE aasrepo.categories (
+	category_seq serial4 NOT NULL, -- 모델카테고리시퀀스
+	category_name varchar NOT NULL, -- 모델카테고리명(영어)
+	category_name2 varchar NULL, -- 모델카테고리명(한국)
+	category_name3 varchar NULL, -- 모델카테고리명()
+	category_name4 varchar NULL, -- 모델카테고리명()
+	category_name5 varchar NULL, -- 모델카테고리명()
+	description text NULL, -- 비고
+	status bpchar(1) DEFAULT 'Y'::bpchar NOT NULL, -- Y=활성,N=비활성
+	refcode1 varchar NULL, -- 카테고리-대분류
+	refcode2 varchar NULL, -- 카테고리-중분류
+	refcode3 varchar NULL, -- 카테고리-소분류
+	create_user_seq int4 DEFAULT 0 NOT NULL, -- 최초생성자
+	create_date timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 최초등록일시
+	last_mod_user_seq int4 NULL, -- 마지막수정자
+	last_mod_date timestamptz NULL, -- 마지막수정일시
+	CONSTRAINT categories_pk PRIMARY KEY (category_seq)
+);
+COMMENT ON TABLE aasrepo.categories IS '모델카테고리(산업분류)';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo.categories.category_seq IS '모델카테고리시퀀스';
+COMMENT ON COLUMN aasrepo.categories.category_name IS '모델카테고리명(영어)';
+COMMENT ON COLUMN aasrepo.categories.category_name2 IS '모델카테고리명(한국)';
+COMMENT ON COLUMN aasrepo.categories.category_name3 IS '모델카테고리명()';
+COMMENT ON COLUMN aasrepo.categories.category_name4 IS '모델카테고리명()';
+COMMENT ON COLUMN aasrepo.categories.category_name5 IS '모델카테고리명()';
+COMMENT ON COLUMN aasrepo.categories.description IS '비고';
+COMMENT ON COLUMN aasrepo.categories.status IS 'Y=활성,N=비활성';
+COMMENT ON COLUMN aasrepo.categories.refcode1 IS '카테고리-대분류';
+COMMENT ON COLUMN aasrepo.categories.refcode2 IS '카테고리-중분류';
+COMMENT ON COLUMN aasrepo.categories.refcode3 IS '카테고리-소분류';
+COMMENT ON COLUMN aasrepo.categories.create_user_seq IS '최초생성자';
+COMMENT ON COLUMN aasrepo.categories.create_date IS '최초등록일시';
+COMMENT ON COLUMN aasrepo.categories.last_mod_user_seq IS '마지막수정자';
+COMMENT ON COLUMN aasrepo.categories.last_mod_date IS '마지막수정일시';
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- aasrepo."groups" definition
+
+-- Drop table
+
+-- DROP TABLE aasrepo."groups";
+
+CREATE TABLE aasrepo."groups" (
+	group_seq serial4 NOT NULL, -- 그룹시퀀스
+	group_name varchar NOT NULL, -- 그룹명(영어)
+	group_name2 varchar NULL, -- 그룹명(한국)
+	group_name3 varchar NULL, -- 그룹명()
+	group_name4 varchar NULL, -- 그룹명()
+	group_name5 varchar NULL, -- 그룹명()
+	description text NULL, -- 비고
+	status bpchar(1) DEFAULT 'Y'::bpchar NOT NULL, -- Y=활성,N=비활성
+	create_user_seq int4 DEFAULT 0 NOT NULL, -- 최초생성자
+	create_date timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 최초등록일시
+	last_mod_user_seq int4 NULL, -- 마지막수정자
+	last_mod_date timestamptz NULL, -- 마지막수정일시
+	CONSTRAINT group_pk PRIMARY KEY (group_seq)
+);
+COMMENT ON TABLE aasrepo."groups" IS '그룹';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo."groups".group_seq IS '그룹시퀀스';
+COMMENT ON COLUMN aasrepo."groups".group_name IS '그룹명(영어)';
+COMMENT ON COLUMN aasrepo."groups".group_name2 IS '그룹명(한국)';
+COMMENT ON COLUMN aasrepo."groups".group_name3 IS '그룹명()';
+COMMENT ON COLUMN aasrepo."groups".group_name4 IS '그룹명()';
+COMMENT ON COLUMN aasrepo."groups".group_name5 IS '그룹명()';
+COMMENT ON COLUMN aasrepo."groups".description IS '비고';
+COMMENT ON COLUMN aasrepo."groups".status IS 'Y=활성,N=비활성';
+COMMENT ON COLUMN aasrepo."groups".create_user_seq IS '최초생성자';
+COMMENT ON COLUMN aasrepo."groups".create_date IS '최초등록일시';
+COMMENT ON COLUMN aasrepo."groups".last_mod_user_seq IS '마지막수정자';
+COMMENT ON COLUMN aasrepo."groups".last_mod_date IS '마지막수정일시';
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+-- aasrepo.socialaccounts definition
+
+-- Drop table
+
+-- DROP TABLE aasrepo.socialaccounts;
+
+CREATE TABLE aasrepo.socialaccounts (
+	socialaccount_seq serial4 NOT NULL, -- 소셜어카운트시퀀스
+	socialprovider_seq int4 NOT NULL,
+	social_id varchar NOT NULL, -- 소셜아이디(이메일)
+	social_in_id varchar NOT NULL, -- 소셜아이디(내부ID)
+	user_seq int4 NOT NULL, -- 사용자시퀀스(참조키)
+	access_token varchar NOT NULL, -- 소셜엑세스토큰
+	refresh_token varchar NOT NULL, -- 소셜갱신토큰
+	description text NULL, -- 비고
+	status bpchar(1) NOT NULL, -- Y=활성,N=비활성
+	create_user_seq int4 DEFAULT 0 NOT NULL, -- 최초생성자
+	create_date timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 최초등록일시
+	last_mod_user_seq int4 NULL, -- 마지막수정자
+	last_mod_date timestamptz NULL, -- 마지막수정일시
+	CONSTRAINT socialaccounts_pk PRIMARY KEY (socialaccount_seq)
+);
+COMMENT ON TABLE aasrepo.socialaccounts IS '소셜어카운트';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo.socialaccounts.socialaccount_seq IS '소셜어카운트시퀀스';
+COMMENT ON COLUMN aasrepo.socialaccounts.social_id IS '소셜아이디(이메일)';
+COMMENT ON COLUMN aasrepo.socialaccounts.social_in_id IS '소셜아이디(내부ID)';
+COMMENT ON COLUMN aasrepo.socialaccounts.user_seq IS '사용자시퀀스(참조키)';
+COMMENT ON COLUMN aasrepo.socialaccounts.access_token IS '소셜엑세스토큰';
+COMMENT ON COLUMN aasrepo.socialaccounts.refresh_token IS '소셜갱신토큰';
+COMMENT ON COLUMN aasrepo.socialaccounts.description IS '비고';
+COMMENT ON COLUMN aasrepo.socialaccounts.status IS 'Y=활성,N=비활성';
+COMMENT ON COLUMN aasrepo.socialaccounts.create_user_seq IS '최초생성자';
+COMMENT ON COLUMN aasrepo.socialaccounts.create_date IS '최초등록일시';
+COMMENT ON COLUMN aasrepo.socialaccounts.last_mod_user_seq IS '마지막수정자';
+COMMENT ON COLUMN aasrepo.socialaccounts.last_mod_date IS '마지막수정일시';
+
+
+-- aasrepo.socialaccounts foreign keys
+
+ALTER TABLE aasrepo.socialaccounts ADD CONSTRAINT socialaccounts_fk1 FOREIGN KEY (socialprovider_seq) REFERENCES aasrepo.socialproviders(socialprovider_seq);
+ALTER TABLE aasrepo.socialaccounts ADD CONSTRAINT socialaccounts_users_fk FOREIGN KEY (user_seq) REFERENCES aasrepo.users(user_seq);
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- aasrepo.socialproviders definition
+
+-- Drop table
+
+-- DROP TABLE aasrepo.socialproviders;
+
+CREATE TABLE aasrepo.socialproviders (
+	socialprovider_seq bigserial NOT NULL, -- 소셜시퀀스
+	socialprovider_name varchar NOT NULL, -- 소셜프로바이더명
+	description text NULL, -- 비고
+	status bpchar(1) DEFAULT 'Y'::bpchar NOT NULL, -- Y=활성,N=비활성
+	create_user_seq int4 DEFAULT 0 NOT NULL, -- 최초생성자
+	create_date timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 최초등록일시
+	last_mod_user_seq int4 NULL, -- 마지막수정자
+	last_mod_date timestamptz NULL, -- 마지막수정일시
+	CONSTRAINT socialproviders_pk PRIMARY KEY (socialprovider_seq)
+);
+COMMENT ON TABLE aasrepo.socialproviders IS '소셜프로바이더(소셜로그인)';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo.socialproviders.socialprovider_seq IS '소셜시퀀스';
+COMMENT ON COLUMN aasrepo.socialproviders.socialprovider_name IS '소셜프로바이더명';
+COMMENT ON COLUMN aasrepo.socialproviders.description IS '비고';
+COMMENT ON COLUMN aasrepo.socialproviders.status IS 'Y=활성,N=비활성';
+COMMENT ON COLUMN aasrepo.socialproviders.create_user_seq IS '최초생성자';
+COMMENT ON COLUMN aasrepo.socialproviders.create_date IS '최초등록일시';
+COMMENT ON COLUMN aasrepo.socialproviders.last_mod_user_seq IS '마지막수정자';
+COMMENT ON COLUMN aasrepo.socialproviders.last_mod_date IS '마지막수정일시';
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- aasrepo.submodels definition
+
+-- Drop table
+
+-- DROP TABLE aasrepo.submodels;
+
+CREATE TABLE aasrepo.submodels (
+	submodel_seq bigserial NOT NULL, -- SUB모델SEQ
+	submodel_name varchar NOT NULL, -- SUB모델명
+	submodel_id varchar NULL, -- SUB모델ID
+	submodel_semantic_id varchar NULL, -- SUB모델 SEMANTIC_ID
+	submodel_template_id varchar NULL, -- SUB모델 TEMPLATE_ID
+	submodel_version varchar(50) NULL, -- SUB모델버전
+	submodel_type varchar(50) NULL, -- SUB모델타입 json/xml/aml
+	category_seq int4 NULL, -- 산업분류카테고리 FK
+	description text NULL, -- 비고
+	status varchar(20) DEFAULT 'temporary'::character varying NOT NULL, -- temporary/draft/published/deprecated
+	metadata jsonb NULL, -- Flexible metadata storage
+	create_user_seq int4 DEFAULT 0 NOT NULL, -- 최초생성자
+	create_date timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 최초등록일시
+	last_mod_user_seq int4 NULL, -- 마지막수정자
+	last_mod_date timestamptz NULL, -- 마지막수정일
+	CONSTRAINT submodels_pk PRIMARY KEY (submodel_seq)
+);
+COMMENT ON TABLE aasrepo.submodels IS 'SUB모델';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo.submodels.submodel_seq IS 'SUB모델SEQ';
+COMMENT ON COLUMN aasrepo.submodels.submodel_name IS 'SUB모델명';
+COMMENT ON COLUMN aasrepo.submodels.submodel_id IS 'SUB모델ID';
+COMMENT ON COLUMN aasrepo.submodels.submodel_semantic_id IS 'SUB모델 SEMANTIC_ID';
+COMMENT ON COLUMN aasrepo.submodels.submodel_template_id IS 'SUB모델 TEMPLATE_ID';
+COMMENT ON COLUMN aasrepo.submodels.submodel_version IS 'SUB모델버전';
+COMMENT ON COLUMN aasrepo.submodels.submodel_type IS 'SUB모델타입 json/xml/aml';
+COMMENT ON COLUMN aasrepo.submodels.category_seq IS '산업분류카테고리 FK';
+COMMENT ON COLUMN aasrepo.submodels.description IS '비고';
+COMMENT ON COLUMN aasrepo.submodels.status IS 'temporary/draft/published/deprecated';
+COMMENT ON COLUMN aasrepo.submodels.metadata IS 'Flexible metadata storage';
+COMMENT ON COLUMN aasrepo.submodels.create_user_seq IS '최초생성자';
+COMMENT ON COLUMN aasrepo.submodels.create_date IS '최초등록일시';
+COMMENT ON COLUMN aasrepo.submodels.last_mod_user_seq IS '마지막수정자';
+COMMENT ON COLUMN aasrepo.submodels.last_mod_date IS '마지막수정일';
+
+
+-- aasrepo.submodels foreign keys
+
+ALTER TABLE aasrepo.submodels ADD CONSTRAINT submodels_categories_fk FOREIGN KEY (category_seq) REFERENCES aasrepo.categories(category_seq);
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- aasrepo.submodel_image definition
+
+-- Drop table
+
+-- DROP TABLE aasrepo.submodel_image;
+
+CREATE TABLE aasrepo.submodel_image (
+	submodel_seq int8 NOT NULL, -- AAS서브모델SEQ
+	submodel_img text NULL, -- AAS서브모델_IMAGE
+	filename varchar NULL, -- AAS모델_MIMETYPE
+	mime_type varchar NULL, -- AAS모델_MIMETYPE
+	CONSTRAINT submodel_image_unique UNIQUE (submodel_seq)
+);
+COMMENT ON TABLE aasrepo.submodel_image IS 'AAS모델-이미지';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo.submodel_image.submodel_seq IS 'AAS서브모델SEQ';
+COMMENT ON COLUMN aasrepo.submodel_image.submodel_img IS 'AAS서브모델_IMAGE';
+COMMENT ON COLUMN aasrepo.submodel_image.filename IS 'AAS모델_MIMETYPE';
+COMMENT ON COLUMN aasrepo.submodel_image.mime_type IS 'AAS모델_MIMETYPE';
+
+
+-- aasrepo.submodel_image foreign keys
+
+ALTER TABLE aasrepo.submodel_image ADD CONSTRAINT submodel_image_submodels_fk FOREIGN KEY (submodel_seq) REFERENCES aasrepo.submodels(submodel_seq);
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+
+-- aasrepo.users definition
+
+-- Drop table
+
+-- DROP TABLE aasrepo.users;
+
+CREATE TABLE aasrepo.users (
+	user_seq bigserial NOT NULL, -- 사용자시퀀스
+	user_id varchar NOT NULL, -- 사용자아이디
+	pw_hash varchar NULL, -- 해쉬암호
+	user_name varchar NOT NULL, -- 사용자명
+	user_phonenumber varchar NULL, -- 사용자폰번호
+	status bpchar(1) DEFAULT 'Y'::bpchar NOT NULL, -- Y=활성,N=비활성
+	start_timestamp timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 가입일시
+	close_timestamp timestamptz NULL, -- 탈퇴일시
+	create_user_seq int4 DEFAULT 0 NOT NULL, -- 최초생성자
+	create_date timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 최초등록일시
+	last_mod_user_seq int4 NULL, -- 마지막수정자
+	last_mod_date timestamptz NULL, -- 마지막수정일시
+	CONSTRAINT users_pk PRIMARY KEY (user_seq)
+);
+COMMENT ON TABLE aasrepo.users IS '사용자,로그인';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo.users.user_seq IS '사용자시퀀스';
+COMMENT ON COLUMN aasrepo.users.user_id IS '사용자아이디';
+COMMENT ON COLUMN aasrepo.users.pw_hash IS '해쉬암호';
+COMMENT ON COLUMN aasrepo.users.user_name IS '사용자명';
+COMMENT ON COLUMN aasrepo.users.user_phonenumber IS '사용자폰번호';
+COMMENT ON COLUMN aasrepo.users.status IS 'Y=활성,N=비활성';
+COMMENT ON COLUMN aasrepo.users.start_timestamp IS '가입일시';
+COMMENT ON COLUMN aasrepo.users.close_timestamp IS '탈퇴일시';
+COMMENT ON COLUMN aasrepo.users.create_user_seq IS '최초생성자';
+COMMENT ON COLUMN aasrepo.users.create_date IS '최초등록일시';
+COMMENT ON COLUMN aasrepo.users.last_mod_user_seq IS '마지막수정자';
+COMMENT ON COLUMN aasrepo.users.last_mod_date IS '마지막수정일시';
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+-- aasrepo.users_group definition
+
+-- Drop table
+
+-- DROP TABLE aasrepo.users_group;
+
+CREATE TABLE aasrepo.users_group (
+	user_seq int4 NOT NULL, -- 사용자
+	group_seq int4 NOT NULL, -- 그룹
+	CONSTRAINT users_group_unique UNIQUE (user_seq)
+);
+COMMENT ON TABLE aasrepo.users_group IS '사용자-그룹';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo.users_group.user_seq IS '사용자';
+COMMENT ON COLUMN aasrepo.users_group.group_seq IS '그룹';
+
+
+-- aasrepo.users_group foreign keys
+
+ALTER TABLE aasrepo.users_group ADD CONSTRAINT users_group_groups_fk FOREIGN KEY (group_seq) REFERENCES aasrepo."groups"(group_seq);
+ALTER TABLE aasrepo.users_group ADD CONSTRAINT users_group_users_fk FOREIGN KEY (user_seq) REFERENCES aasrepo.users(user_seq);
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+
+-- aasrepo.validations definition
+
+-- Drop table
+
+-- DROP TABLE aasrepo.validations;
+
+CREATE TABLE aasrepo.validations (
+	validation_seq bigserial NOT NULL, -- 검증시퀀스
+	target_type varchar(50) NOT NULL, -- 타겟타입(AAS,서브모델,인스턴스)
+	target_seq int4 NULL, -- 타겟시퀀스(참조)
+	target_id varchar NOT NULL, -- 타겟ID(참조)
+	validation_result jsonb NULL, -- 비고(결과내용)
+	description text NULL, -- 비고
+	status varchar NOT NULL, -- sucess=활성,fail=비활성
+	create_user_seq int4 DEFAULT 0 NOT NULL, -- 최초생성자
+	create_date timestamptz DEFAULT CURRENT_TIMESTAMP NULL, -- 최초등록일시
+	CONSTRAINT validations_pk PRIMARY KEY (validation_seq)
+);
+COMMENT ON TABLE aasrepo.validations IS '검증결과';
+
+-- Column comments
+
+COMMENT ON COLUMN aasrepo.validations.validation_seq IS '검증시퀀스';
+COMMENT ON COLUMN aasrepo.validations.target_type IS '타겟타입(AAS,서브모델,인스턴스)';
+COMMENT ON COLUMN aasrepo.validations.target_seq IS '타겟시퀀스(참조)';
+COMMENT ON COLUMN aasrepo.validations.target_id IS '타겟ID(참조)';
+COMMENT ON COLUMN aasrepo.validations.validation_result IS '비고(결과내용)';
+COMMENT ON COLUMN aasrepo.validations.description IS '비고';
+COMMENT ON COLUMN aasrepo.validations.status IS 'sucess=활성,fail=비활성';
+COMMENT ON COLUMN aasrepo.validations.create_user_seq IS '최초생성자';
+COMMENT ON COLUMN aasrepo.validations.create_date IS '최초등록일시';
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------
+

@@ -1,0 +1,90 @@
+debug:
+  mode: 1
+
+service_info:
+  name: AAS_Repository
+  lang_code: 1
+  # host_f_domain: "https://build.onewayplatform.com:6200"
+  # host_f_ip: "https://192.168.0.46:6200"
+  # host_b_domain: "https://build.onewayplatform.com:6100"
+  host_f_domain: "http://localhost:4000"
+  host_f_ip: "http://127.0.0.1:4000"
+  host_b_domain: "http://localhost:8000"
+
+
+social_google:
+  GOOGLE_CLIENT_ID: 782860944050-gcp3h8tq62sm65np4guu099is42sn5mn.apps.googleusercontent.com
+  GOOGLE_CLIENT_SECRET: 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
+  GOOGLE_AUTH_URL: https://accounts.google.com/o/oauth2/v2/auth
+  GOOGLE_TOKEN_URL: https://oauth2.googleapis.com/token
+  GOOGLE_PROFILE_URL: https://www.googleapis.com/oauth2/v2/userinfo
+  GOOGLE_REDIRECT_URI: "{url}/google/callback"
+
+social_naver:
+  NAVER_CLIENT_ID: 7ncgB2GBbVw3gyor4ktl
+  NAVER_CLIENT_SECRET: zgh69IDMXU
+  NAVER_AUTH_URL: https://nid.naver.com/oauth2.0/authorize
+  NAVER_TOKEN_URL: https://nid.naver.com/oauth2.0/token
+  NAVER_PROFILE_URL: https://openapi.naver.com/v1/nid/me
+  NAVER_REDIRECT_URI: "{url}/naver/callback"
+  
+file:
+  fullpath: /home/datalake/aas_files
+  mainpath: /aas_files
+  url: 
+
+fastapi:
+  max_request: 1000000
+  max_request_interval_rt : 0.1
+  
+
+keti_api:
+  url: http://te.amrc.kr
+
+postgres_idc:
+  host: 192.168.100.46
+  port: 5432
+  username: postgres
+  password: ipx2309753
+  database: postgres
+  timeout: 7
+
+postgres:
+  host: ys.onewayplatform.com
+  port: 30308
+  username: postgres
+  password: ipx2309753
+  database: postgres
+  timeout: 7
+
+
+auth:
+  JWT_SECRET_KEY: impix_secret_salt
+  ALGORITHM: HS256
+  password_secret_key: crNz2jnaPU_OKmA8dj-mLywgFTeMw4WLlICDZMKUuIo==
+  target: AASREPO_IMPIX
+  expires_sec: 43200
+  expires_hour: 1
+
+mail:
+  smtp_title : "KETI AAS Repository Hub"
+  smtp_server: smtp.gmail.com
+  smtp_port: 587
+  email_address: 3leaf.4leaf@gmail.com
+  email_password: ekfbdzjlujajatwg
+  reset_password_url: "{url}/reset-password?token="
+
+
+csv:
+  passKey: "crNz2jnaPU_OKmA8dj-mLywgFTeMw4WLlICDZMKUuIo="    
+
+log:
+# 0:NOTSET 1:DEBUG / 2:INFO / 3:WARN / 4:ERROR / 5:FATAL
+  level: 4
+  name: "AASREPO"
+  db_name: aas
+  path: /Log
+  length:
+    system: 20000
+
+
