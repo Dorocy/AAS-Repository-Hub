@@ -26,11 +26,24 @@ def start_jvm():
     setJavaEnvironment()
 
     # JVM 시작: basyx 관련 jar 파일들이 들어있는 디렉토리
+    # jar_dir = "./basyx"
+    # all_jars = glob.glob(os.path.join(jar_dir, "*.jar"))
+
+    # if not jpype.isJVMStarted():
+    #     jpype.startJVM(classpath=all_jars)
+
     jar_dir = "./basyx"
     all_jars = glob.glob(os.path.join(jar_dir, "*.jar"))
 
+    # JVM 동적 라이브러리 경로 (사용자의 실제 경로에 맞게 수정)
+    jvm_dll_path = os.path.abspath("./jdk/mac/jdk-17.0.2.jdk/Contents/Home/lib/libjli.dylib")
+
     if not jpype.isJVMStarted():
-        jpype.startJVM(classpath=all_jars)
+        jpype.startJVM(jvm_dll_path, "-ea", classpath=all_jars)
+        
+        print("java version:", jpype.java.lang.System.getProperty("java.version"))
+        print("java :", jpype.java.lang.System.getProperty("java.version"))
+
 
 class PyMultipartFile:
     """

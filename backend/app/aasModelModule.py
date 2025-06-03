@@ -42,51 +42,105 @@ async def aasModelListEvent(userinfo, title, searchKey, category_seq, pageNumber
 
     rstData = { "result" : "error", "msg" : "Failed to get list" , "data" : ""}
 
-    sql = f"""
-    with min_tbl as (
-        select aasmodel_id, min(aasmodel_seq) as min_aasmodel_seq
-        from aasrepo.aasmodels
-        group by aasmodel_id
-        order by min_aasmodel_seq desc
-    ),  last_aasmodel_tbl as (
-        select a.aasmodel_id, a.status, max(a.aasmodel_seq) as max_aasmodel_seq, b.min_aasmodel_seq
-        from aasrepo.aasmodels a
-        left join min_tbl b on a.aasmodel_id = b.aasmodel_id
-        group by a.aasmodel_id, a.status, b.min_aasmodel_seq
-        order by 3 desc, 4 desc
+#     sql = f"""
+#     with min_tbl as (
+#         select aasmodel_id, min(aasmodel_seq) as min_aasmodel_seq
+#         from aasrepo.aasmodels
+#         group by aasmodel_id
+#         order by min_aasmodel_seq desc
+#     ),  last_aasmodel_tbl as (
+#         select a.aasmodel_id, a.status, max(a.aasmodel_seq) as max_aasmodel_seq, b.min_aasmodel_seq
+#         from aasrepo.aasmodels a
+#         left join min_tbl b on a.aasmodel_id = b.aasmodel_id
+#         group by a.aasmodel_id, a.status, b.min_aasmodel_seq
+#         order by 3 desc, 4 desc
+#     )
+
+#     select dense_rank() over ( order by aa.min_aasmodel_seq desc) as group_seq 
+#     	, row_number() over (partition by aa.aasmodel_id  order by a.aasmodel_seq desc) as in_seq 
+#         , a.aasmodel_seq, a.aasmodel_name,  a.aasmodel_id, a."version", a.aasmodel_template_id, a."type",  a.description, a.category_seq
+#         ,  CASE {lang_code}
+#                 WHEN 1  THEN b.category_name
+#                 WHEN 2  THEN b.category_name2
+#                 WHEN 3  THEN b.category_name3
+#                 WHEN 4  THEN b.category_name4
+#                 WHEN 5  THEN b.category_name5
+#                 ELSE b.category_name END as category_name, a.status, aasrepo.fncodenm(a.status, {lang_code} ) as status_nm, a.create_date
+#         , c.aasmodel_img, c.mime_type, c.filename
+#     from aasrepo.aasmodels a
+#     left join last_aasmodel_tbl aa on a.aasmodel_seq = aa.max_aasmodel_seq
+#     join  aasrepo.categories b on  a.category_seq = b.category_seq
+#     left join aasrepo.aasmodel_image c on a.aasmodel_seq = c.aasmodel_seq
+#     where ('{category_seq}' =  case left('{category_seq}', 6) 
+# 				when 'GRP100' then b.refcode1 
+# 				when 'GRP200' then b.refcode2 
+# 				when 'GRP300' then b.refcode3
+# 				else b.category_seq::varchar end or '{category_seq}' = '')
+#         and ( lower(a.aasmodel_name) like '%' || lower('{searchKey}') || '%' 
+#             or lower(a.description) like '%' || lower('{searchKey}') || '%' 
+#             or lower(a.aasmodel_id) like '%' || lower('{searchKey}') || '%' 
+#             or (a.aasmodel_template_id) like '%' || lower('{searchKey}') || '%' 
+#             )
+#         and lower(a.aasmodel_name) like '%' || lower('{title}') || '%' 
+#         { f"""and jsonb_path_exists(metadata, '$.**."{meta_string["key"]}" ? (@ == "{meta_string["value"]}")')  """ if meta_flag else ''  }
+#         and ( (3={user_group_seq} and a.status in ('published')  )
+#              or {user_group_seq} in (1, 2)	) --일반사용자 일경우 배포된것만
+#         and  aa.max_aasmodel_seq is not null
+    
+# """
+
+    json_filter = (
+        f"""and jsonb_path_exists(metadata, '$.**."{meta_string["key"]}" ? (@ == "{meta_string["value"]}")')"""
+        if meta_flag else ''
     )
 
-    select dense_rank() over ( order by aa.min_aasmodel_seq desc) as group_seq 
-    	, row_number() over (partition by aa.aasmodel_id  order by a.aasmodel_seq desc) as in_seq 
-        , a.aasmodel_seq, a.aasmodel_name,  a.aasmodel_id, a."version", a.aasmodel_template_id, a."type",  a.description, a.category_seq
-        ,  CASE {lang_code}
-                WHEN 1  THEN b.category_name
-                WHEN 2  THEN b.category_name2
-                WHEN 3  THEN b.category_name3
-                WHEN 4  THEN b.category_name4
-                WHEN 5  THEN b.category_name5
-                ELSE b.category_name END as category_name, a.status, aasrepo.fncodenm(a.status, {lang_code} ) as status_nm, a.create_date
-        , c.aasmodel_img, c.mime_type, c.filename
-    from aasrepo.aasmodels a
-    left join last_aasmodel_tbl aa on a.aasmodel_seq = aa.max_aasmodel_seq
-    join  aasrepo.categories b on  a.category_seq = b.category_seq
-    left join aasrepo.aasmodel_image c on a.aasmodel_seq = c.aasmodel_seq
-    where ('{category_seq}' =  case left('{category_seq}', 6) 
-				when 'GRP100' then b.refcode1 
-				when 'GRP200' then b.refcode2 
-				when 'GRP300' then b.refcode3
-				else b.category_seq::varchar end or '{category_seq}' = '')
-        and ( lower(a.aasmodel_name) like '%' || lower('{searchKey}') || '%' 
-            or lower(a.description) like '%' || lower('{searchKey}') || '%' 
-            or lower(a.aasmodel_id) like '%' || lower('{searchKey}') || '%' 
-            or (a.aasmodel_template_id) like '%' || lower('{searchKey}') || '%' 
-            )
-        and lower(a.aasmodel_name) like '%' || lower('{title}') || '%' 
-        { f"""and jsonb_path_exists(metadata, '$.**."{meta_string["key"]}" ? (@ == "{meta_string["value"]}")')  """ if meta_flag else ''  }
-        and ( (3={user_group_seq} and a.status in ('published')  )
-             or {user_group_seq} in (1, 2)	) --일반사용자 일경우 배포된것만
-        and  aa.max_aasmodel_seq is not null
-    
+    sql = f"""
+    WITH min_tbl AS (
+        SELECT aasmodel_id, MIN(aasmodel_seq) AS min_aasmodel_seq
+        FROM aasrepo.aasmodels
+        GROUP BY aasmodel_id
+        ORDER BY min_aasmodel_seq DESC
+    ), last_aasmodel_tbl AS (
+        SELECT a.aasmodel_id, a.status, MAX(a.aasmodel_seq) AS max_aasmodel_seq, b.min_aasmodel_seq
+        FROM aasrepo.aasmodels a
+        LEFT JOIN min_tbl b ON a.aasmodel_id = b.aasmodel_id
+        GROUP BY a.aasmodel_id, a.status, b.min_aasmodel_seq
+        ORDER BY 3 DESC, 4 DESC
+    )
+
+    SELECT DENSE_RANK() OVER (ORDER BY aa.min_aasmodel_seq DESC) AS group_seq,
+        ROW_NUMBER() OVER (PARTITION BY aa.aasmodel_id ORDER BY a.aasmodel_seq DESC) AS in_seq,
+        a.aasmodel_seq, a.aasmodel_name, a.aasmodel_id, a."version", a.aasmodel_template_id, a."type", a.description, a.category_seq,
+        CASE {lang_code}
+            WHEN 1 THEN b.category_name
+            WHEN 2 THEN b.category_name2
+            WHEN 3 THEN b.category_name3
+            WHEN 4 THEN b.category_name4
+            WHEN 5 THEN b.category_name5
+            ELSE b.category_name
+        END AS category_name,
+        a.status,
+        aasrepo.fncodenm(a.status, {lang_code}) AS status_nm,
+        a.create_date,
+        c.aasmodel_img, c.mime_type, c.filename
+    FROM aasrepo.aasmodels a
+    LEFT JOIN last_aasmodel_tbl aa ON a.aasmodel_seq = aa.max_aasmodel_seq
+    JOIN aasrepo.categories b ON a.category_seq = b.category_seq
+    LEFT JOIN aasrepo.aasmodel_image c ON a.aasmodel_seq = c.aasmodel_seq
+    WHERE ('{category_seq}' = CASE LEFT('{category_seq}', 6)
+                WHEN 'GRP100' THEN b.refcode1
+                WHEN 'GRP200' THEN b.refcode2
+                WHEN 'GRP300' THEN b.refcode3
+                ELSE b.category_seq::VARCHAR END OR '{category_seq}' = '')
+    AND (LOWER(a.aasmodel_name) LIKE '%' || LOWER('{searchKey}') || '%'
+        OR LOWER(a.description) LIKE '%' || LOWER('{searchKey}') || '%'
+        OR LOWER(a.aasmodel_id) LIKE '%' || LOWER('{searchKey}') || '%'
+        OR LOWER(a.aasmodel_template_id) LIKE '%' || LOWER('{searchKey}') || '%')
+    AND LOWER(a.aasmodel_name) LIKE '%' || LOWER('{title}') || '%'
+    {json_filter}
+    AND ((3={user_group_seq} AND a.status IN ('published'))
+        OR {user_group_seq} IN (1, 2))
+    AND aa.max_aasmodel_seq IS NOT NULL
 """
 
     try:
@@ -136,7 +190,15 @@ async def aasmodelSaveCheckEvent(aasmodel_id):
         rst = await async_postQueryDataOne(sql)
 
         if rst["data"] != "":
-            return JSONResponse(status_code=400, content={ "result" : "error", "msg" : f"There are already registration (or temporary save) in progress. {rst["data"]}" , "data" : rst["data"]}) 
+            # return JSONResponse(status_code=400, content={ "result" : "error", "msg" : f"There are already registration (or temporary save) in progress. {rst["data"]}" , "data" : rst["data"]})
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "result": "error",
+                    "msg": f"There are already registration (or temporary save) in progress. {rst['data']}",
+                    "data": rst["data"]
+                }
+            )
             
         return JSONResponse(status_code=200, content=rst) 
         

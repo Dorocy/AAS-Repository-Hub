@@ -242,73 +242,163 @@ async def instanceSaveEvent(userinfo, body):
         # if submodel_sql == "":
         #     return JSONResponse(status_code=400, content={ "result" : "error", "msg" : "Checked the Submodels Info" , "data" : ""})                 
         
-        sql  = f"""
+#         sql  = f"""
 
-    with ins_instance as (
-        INSERT INTO aasrepo.aasinstance (instance_seq, instance_name, description, verification, user_seq, create_user_seq, create_date, last_mod_user_seq, last_mod_date)
-        SELECT { f'''nextval('aasrepo.aasinstance_instance_seq_seq'::regclass)''' if instance_seq == "" else instance_seq }, '{instance_name}', '{description}', '{verification}'
-            , {userinfo.user_seq}, {userinfo.user_seq}, localtimestamp, {userinfo.user_seq}, localtimestamp
-        ON CONFLICT(instance_seq) 
-        do update SET 
-        instance_name = EXCLUDED.instance_name, description = EXCLUDED.description, verification = EXCLUDED.verification, 
-        user_seq = EXCLUDED.user_seq, last_mod_user_seq = EXCLUDED.last_mod_user_seq, last_mod_date = EXCLUDED.last_mod_date
-        returning instance_seq
-    ), ins_aasmodel as (
-        INSERT INTO aasrepo.aasinstance_aasmodels (instance_seq, aasmodel_seq, metadata, create_user_seq, create_date, last_mod_user_seq, last_mod_date)
-        SELECT src.instance_seq, {aasmodel_seq}, %s, {userinfo.user_seq}, localtimestamp, {userinfo.user_seq}, localtimestamp
-        FROM ins_instance AS src
-        ON CONFLICT(instance_seq, aasmodel_seq) 
-        do update SET instance_seq = EXCLUDED.instance_seq, aasmodel_seq = EXCLUDED.aasmodel_seq, metadata = EXCLUDED.metadata,
-        last_mod_user_seq = EXCLUDED.last_mod_user_seq, last_mod_date = EXCLUDED.last_mod_date
-        returning instance_seq, aasmodel_seq
-    ), submodel_tbl as (
-        { f"""
-        select instance_seq, aasmodel_seq, null::int4 as submodel_seq, null::jsonb as metadata,  0 as create_user_seq,  localtimestamp as create_date
-        from  ins_aasmodel  
-        """ if submodel_sql == "" else f"""
-        select b.instance_seq, b.aasmodel_seq, src.submodel_seq, src.submodel_metadata::jsonb as metadata
-            , {userinfo.user_seq} as create_user_seq,  localtimestamp as create_date
-        from (
-            {submodel_sql}
-        ) as src
-        , ins_aasmodel as b
-        """ 
-        }
-    ), del_submodel as (
-        DELETE FROM aasrepo.aasinstance_aasmodel_submodels t
-        WHERE EXISTS (
-            SELECT 1
-            FROM submodel_tbl s
-            WHERE t.instance_seq = s.instance_seq
-            AND t.aasmodel_seq = s.aasmodel_seq
-        )
-        AND NOT EXISTS (
-            SELECT 1
-            FROM submodel_tbl s2
-            WHERE s2.instance_seq = t.instance_seq
-            AND s2.aasmodel_seq = t.aasmodel_seq
-            AND s2.submodel_seq = t.submodel_seq
-        )
-    ), ins_submodel as (
-        INSERT INTO aasrepo.aasinstance_aasmodel_submodels (
-            instance_seq, aasmodel_seq, submodel_seq,
-            metadata, create_user_seq, create_date
-        )
-        SELECT 
-            instance_seq, aasmodel_seq, submodel_seq,
-            metadata, create_user_seq, create_date
-        FROM submodel_tbl
-        where submodel_seq is not null
-        ON CONFLICT (instance_seq, aasmodel_seq, submodel_seq) DO UPDATE
-        SET 
-            metadata = EXCLUDED.metadata,
-            last_mod_user_seq = EXCLUDED.create_user_seq,
-            last_mod_date = EXCLUDED.create_date
-    )
-    select instance_seq
-    from ins_instance
+#     with ins_instance as (
+#         INSERT INTO aasrepo.aasinstance (instance_seq, instance_name, description, verification, user_seq, create_user_seq, create_date, last_mod_user_seq, last_mod_date)
+#         SELECT { f'''nextval('aasrepo.aasinstance_instance_seq_seq'::regclass)''' if instance_seq == "" else instance_seq }, '{instance_name}', '{description}', '{verification}'
+#             , {userinfo.user_seq}, {userinfo.user_seq}, localtimestamp, {userinfo.user_seq}, localtimestamp
+#         ON CONFLICT(instance_seq) 
+#         do update SET 
+#         instance_name = EXCLUDED.instance_name, description = EXCLUDED.description, verification = EXCLUDED.verification, 
+#         user_seq = EXCLUDED.user_seq, last_mod_user_seq = EXCLUDED.last_mod_user_seq, last_mod_date = EXCLUDED.last_mod_date
+#         returning instance_seq
+#     ), ins_aasmodel as (
+#         INSERT INTO aasrepo.aasinstance_aasmodels (instance_seq, aasmodel_seq, metadata, create_user_seq, create_date, last_mod_user_seq, last_mod_date)
+#         SELECT src.instance_seq, {aasmodel_seq}, %s, {userinfo.user_seq}, localtimestamp, {userinfo.user_seq}, localtimestamp
+#         FROM ins_instance AS src
+#         ON CONFLICT(instance_seq, aasmodel_seq) 
+#         do update SET instance_seq = EXCLUDED.instance_seq, aasmodel_seq = EXCLUDED.aasmodel_seq, metadata = EXCLUDED.metadata,
+#         last_mod_user_seq = EXCLUDED.last_mod_user_seq, last_mod_date = EXCLUDED.last_mod_date
+#         returning instance_seq, aasmodel_seq
+#     ), submodel_tbl as (
+#         { f"""
+#         select instance_seq, aasmodel_seq, null::int4 as submodel_seq, null::jsonb as metadata,  0 as create_user_seq,  localtimestamp as create_date
+#         from  ins_aasmodel  
+#         """ if submodel_sql == "" else f"""
+#         select b.instance_seq, b.aasmodel_seq, src.submodel_seq, src.submodel_metadata::jsonb as metadata
+#             , {userinfo.user_seq} as create_user_seq,  localtimestamp as create_date
+#         from (
+#             {submodel_sql}
+#         ) as src
+#         , ins_aasmodel as b
+#         """ 
+#         }
+#     ), del_submodel as (
+#         DELETE FROM aasrepo.aasinstance_aasmodel_submodels t
+#         WHERE EXISTS (
+#             SELECT 1
+#             FROM submodel_tbl s
+#             WHERE t.instance_seq = s.instance_seq
+#             AND t.aasmodel_seq = s.aasmodel_seq
+#         )
+#         AND NOT EXISTS (
+#             SELECT 1
+#             FROM submodel_tbl s2
+#             WHERE s2.instance_seq = t.instance_seq
+#             AND s2.aasmodel_seq = t.aasmodel_seq
+#             AND s2.submodel_seq = t.submodel_seq
+#         )
+#     ), ins_submodel as (
+#         INSERT INTO aasrepo.aasinstance_aasmodel_submodels (
+#             instance_seq, aasmodel_seq, submodel_seq,
+#             metadata, create_user_seq, create_date
+#         )
+#         SELECT 
+#             instance_seq, aasmodel_seq, submodel_seq,
+#             metadata, create_user_seq, create_date
+#         FROM submodel_tbl
+#         where submodel_seq is not null
+#         ON CONFLICT (instance_seq, aasmodel_seq, submodel_seq) DO UPDATE
+#         SET 
+#             metadata = EXCLUDED.metadata,
+#             last_mod_user_seq = EXCLUDED.create_user_seq,
+#             last_mod_date = EXCLUDED.create_date
+#     )
+#     select instance_seq
+#     from ins_instance
     
-"""
+# """
+
+            # 1. instance_seq 표현식 분리
+            instance_seq_sql = f"nextval('aasrepo.aasinstance_instance_seq_seq'::regclass)" if instance_seq == "" else instance_seq
+
+            # 2. submodel_sql 조건부 분기 정리
+            if submodel_sql == "":
+                submodel_sql_block = f"""
+                    select instance_seq, aasmodel_seq, null::int4 as submodel_seq, null::jsonb as metadata,  0 as create_user_seq,  localtimestamp as create_date
+                    from  ins_aasmodel
+                """
+            else:
+                submodel_sql_block = f"""
+                    select b.instance_seq, b.aasmodel_seq, src.submodel_seq, src.submodel_metadata::jsonb as metadata,
+                        {userinfo.user_seq} as create_user_seq,  localtimestamp as create_date
+                    from (
+                        {submodel_sql}
+                    ) as src,
+                    ins_aasmodel as b
+                """
+
+            # 3. 전체 SQL 문자열
+            sql = f"""
+            WITH ins_instance AS (
+                INSERT INTO aasrepo.aasinstance (
+                    instance_seq, instance_name, description, verification, user_seq,
+                    create_user_seq, create_date, last_mod_user_seq, last_mod_date
+                )
+                SELECT {instance_seq_sql}, '{instance_name}', '{description}', '{verification}',
+                    {userinfo.user_seq}, {userinfo.user_seq}, localtimestamp, {userinfo.user_seq}, localtimestamp
+                ON CONFLICT(instance_seq) DO UPDATE SET
+                    instance_name = EXCLUDED.instance_name,
+                    description = EXCLUDED.description,
+                    verification = EXCLUDED.verification,
+                    user_seq = EXCLUDED.user_seq,
+                    last_mod_user_seq = EXCLUDED.last_mod_user_seq,
+                    last_mod_date = EXCLUDED.last_mod_date
+                RETURNING instance_seq
+            ),
+            ins_aasmodel AS (
+                INSERT INTO aasrepo.aasinstance_aasmodels (
+                    instance_seq, aasmodel_seq, metadata,
+                    create_user_seq, create_date, last_mod_user_seq, last_mod_date
+                )
+                SELECT src.instance_seq, {aasmodel_seq}, %s, {userinfo.user_seq}, localtimestamp, {userinfo.user_seq}, localtimestamp
+                FROM ins_instance AS src
+                ON CONFLICT(instance_seq, aasmodel_seq) DO UPDATE SET
+                    instance_seq = EXCLUDED.instance_seq,
+                    aasmodel_seq = EXCLUDED.aasmodel_seq,
+                    metadata = EXCLUDED.metadata,
+                    last_mod_user_seq = EXCLUDED.last_mod_user_seq,
+                    last_mod_date = EXCLUDED.last_mod_date
+                RETURNING instance_seq, aasmodel_seq
+            ),
+            submodel_tbl AS (
+                {submodel_sql_block}
+            ),
+            del_submodel AS (
+                DELETE FROM aasrepo.aasinstance_aasmodel_submodels t
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM submodel_tbl s
+                    WHERE t.instance_seq = s.instance_seq
+                    AND t.aasmodel_seq = s.aasmodel_seq
+                )
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM submodel_tbl s2
+                    WHERE s2.instance_seq = t.instance_seq
+                    AND s2.aasmodel_seq = t.aasmodel_seq
+                    AND s2.submodel_seq = t.submodel_seq
+                )
+            ),
+            ins_submodel AS (
+                INSERT INTO aasrepo.aasinstance_aasmodel_submodels (
+                    instance_seq, aasmodel_seq, submodel_seq,
+                    metadata, create_user_seq, create_date
+                )
+                SELECT 
+                    instance_seq, aasmodel_seq, submodel_seq,
+                    metadata, create_user_seq, create_date
+                FROM submodel_tbl
+                WHERE submodel_seq IS NOT NULL
+                ON CONFLICT (instance_seq, aasmodel_seq, submodel_seq) DO UPDATE SET
+                    metadata = EXCLUDED.metadata,
+                    last_mod_user_seq = EXCLUDED.create_user_seq,
+                    last_mod_date = EXCLUDED.create_date
+            )
+            SELECT instance_seq
+            FROM ins_instance
+            """
 
         rst = await async_postQueryDataOne(sql, None, True, userinfo.user_seq, "INSTANCE", custom_args)
 

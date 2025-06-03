@@ -26,7 +26,7 @@ MAX_REQUEST = get_config_value('fastapi', 'max_request')
 MAX_REQUEST_RT = get_config_value('fastapi', 'max_request_interval_rt')
 
 
-app = FastAPI(title=f"{SYS_NAME} BACKEND by Impix.")
+app = FastAPI(title=f"{SYS_NAME} BACKEND.")
 
 
 # 허용할 Origin 등록

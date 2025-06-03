@@ -34,7 +34,9 @@ def infoLogger(msg:str = "", logName=None, target:str = "", user_seq:int = 0, er
     if logName is None:
         name = LOG_NAME
     else:
-        name = f"{LOG_NAME}|{logName}{ '|' + target if target != "" else ""}|{user_seq}|"
+        # name = f"{LOG_NAME}|{logName}{ '|' + target if target != '' else ''}|{user_seq}|"
+        #큰따옴표에서 발생하는에러..?
+        name = f"{LOG_NAME}|{logName}{'|' + target if target != '' else ''}|{user_seq}|"
 
     infoLog = logging.getLogger(name=f'{name}') 
     infoLog.setLevel(logging.INFO) ## 경고 수준 설정

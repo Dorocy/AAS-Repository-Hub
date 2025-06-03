@@ -26,7 +26,7 @@ MAX_REQUEST_RT = get_config_value('fastapi', 'max_request_interval_rt')
 
 
 def create_app(port: int, max_requests: int):
-    app = FastAPI(title=f"{SYS_NAME} BACKEND by Impix.")
+    app = FastAPI(title=f"{SYS_NAME} BACKEND")
     
     # 요청 수와 최대 요청 수 초기화
     app.state.request_count = 0

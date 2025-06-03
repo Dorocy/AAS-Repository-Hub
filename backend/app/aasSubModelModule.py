@@ -125,7 +125,15 @@ async def aasSubModelSaveCheckEvent(submodel_id):
         rst = await async_postQueryDataOne(sql)
 
         if rst["data"] != "":
-            return JSONResponse(status_code=400, content={ "result" : "error", "msg" : f"There are already registration (or temporary save) in progress. {rst["data"]}" , "data" : rst["data"]}) 
+            # return JSONResponse(status_code=400, content={ "result" : "error", "msg" : f"There are already registration (or temporary save) in progress. {rst["data"]}" , "data" : rst["data"]}) 
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "result": "error",
+                    "msg": f"There are already registration (or temporary save) in progress. {rst['data']}",
+                    "data": rst["data"]
+                }
+            )
             
         return JSONResponse(status_code=200, content=rst) 
 
