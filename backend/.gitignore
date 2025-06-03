@@ -3,6 +3,6 @@ backend/jdk/
 backend/basyx/
 backend/Miniconda3-latest-MacOSX-arm64.sh
 
-#python cach file
+#python cache file
 **/__pycache__/
 .DS_Store
