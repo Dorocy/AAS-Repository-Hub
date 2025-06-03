@@ -1,0 +1,4 @@
+# JDK & Jar 파일 무시
+backend/jdk/
+backend/basyx/
+backend/Miniconda3-latest-MacOSX-arm64.sh
