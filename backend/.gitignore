@@ -1,4 +1,8 @@
-# JDK & Jar 파일 무시
+# JDK & Jar file
 backend/jdk/
 backend/basyx/
 backend/Miniconda3-latest-MacOSX-arm64.sh
+
+#python cach file
+**/__pycache__/
+.DS_Store
