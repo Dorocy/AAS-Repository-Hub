@@ -1,0 +1,31 @@
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx
+    restart: always
+    ports:
+      - "80:80"  # 외부 포트: nginx 내부 포트
+    volumes:
+      - ./conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - aas_front
+    networks:
+      - bridge_aas-front
+
+  aas_front:
+    build: .
+    image: aas-front:latest
+    container_name: aas_front
+    ports:
+      - "3000:3000"
+    restart: always
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+    networks:
+      - bridge_aas-front
+
+networks:
+  bridge_aas-front:
+    driver: bridge

@@ -1,0 +1,15 @@
+/* @import "../metronic/vendors/keenicons/duotone/style.css";
+@import "../metronic/vendors/keenicons/filled/style.css";
+@import "../metronic/vendors/keenicons/solid/style.css";
+@import "../metronic/vendors/keenicons/outline/style.css";
+
+@import "../metronic/css/styles.css";
+*/
+/* @import "@/styles/webfont.css";
+@import "@/styles/custom.css"; */
+@import 'custom.css';
+@import 'webfont.css';
+
+#__next {
+    display: contents;
+}
