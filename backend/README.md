@@ -109,15 +109,6 @@ backend/
 
 ---
 
-## 🧩 기타 문서 및 참조 자료
-
-- `AAS_REPOSITORY_postgresql16_20250520.sql`: DB 백업 (SQL)
-- `AAS_REPOSITORY_관리자_매뉴얼_v1.0.pptx`: 관리자용 설명서
-- `AAS_REPOSITORY_사용자_매뉴얼_v1.0.pptx`: 사용자 매뉴얼
-- `AAS_REPOSITORY_구축_사업_개발환경.hwp`: 개발환경 요약서
-- `AasEnvironmentApiHTTPController.java`: 바식스 API 수정본
-- `DefaultAASEnvironment.java`: 바식스 환경 기본 파일
-
 ## 프로젝트 상세 구조
 
 ```
@@ -222,19 +213,13 @@ AAS_REPO_BACK
     : 가상환경 python main_nginx.py --host 0.0.0.0 --port 8081 workers 2
 ```
 
-## ETC_DOCUMENT
+## 🧩 기타 문서 및 참조 자료
 
-```
-	AAS_REPOSITORY_postgresql16_20250520.sql		## AAS Repository postgresql16 db 백업파일(SQL형식)
-    AAS_REPOSITORY_postgresql16_20250520.tar		## AAS Repository postgresql16 db 백업파일(TAR형식)
-    AAS_REPOSITORY_postgresql_Schema_Info.txt		## AAS Repository 스키마 생성 및 초기화
-    AAS_REPOSITORY_관리자_매뉴얼_v.1.0.pptx			## 관리자 매뉴얼
-    AAS_REPOSITORY_사용자_매뉴얼_v.1.0.pptx			## 사용자 매뉴얼
-	AAS_REPOSITORY_구축_사업_개발환경.hwp			## 개발 환경 정보(Basyx 추가 사항 포함)
-    AasEnvironmentApiHTTPController.java			## 바식스 수정 파일1
-	DefaultAASEnvironment.java						## 바식스 수정 파일2
-	https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_windows-x64_bin.zip
-		## openjdk windows version : 17.0.2 하위 폴더를 bin~부터 압축 풀어 jdk\windows\openjdk-17.0.2   압축 풀기
-	https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_linux-x64_bin.tar.gz
-		## openjdk linux version : 17.0.2 하위 폴더를 bin~부터 압축 풀어 jdk\linux\openjdk-17.0.2   압축 풀기
+- `AAS_REPOSITORY_postgresql16_20250520.sql`: DB 백업 (SQL)
+- `AAS_REPOSITORY_관리자_매뉴얼_v1.0.pptx`: 관리자용 설명서
+- `AAS_REPOSITORY_사용자_매뉴얼_v1.0.pptx`: 사용자 매뉴얼
+- `AAS_REPOSITORY_구축_사업_개발환경.hwp`: 개발환경 요약서
+- `AasEnvironmentApiHTTPController.java`: 바식스 API 수정본
+- `DefaultAASEnvironment.java`: 바식스 환경 기본 파일
+
 ```
